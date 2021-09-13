@@ -89,7 +89,6 @@ public class MusicService extends Service implements OnPreparedListener {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent == null) return START_NOT_STICKY;
-
         String[] musicUri = intent.getStringArrayExtra("music");
         if (musicUri == null) {
             return START_NOT_STICKY;
@@ -120,6 +119,14 @@ public class MusicService extends Service implements OnPreparedListener {
             return mService.get().position();
         }
 
+        public void seekTo(int mes) {
+            mService.get().seekTo(mes);
+        }
+
+    }
+
+    public void seekTo(int mes) {
+        mMediaPlayer.seekTo(mes);
     }
 
     public long duration() {
