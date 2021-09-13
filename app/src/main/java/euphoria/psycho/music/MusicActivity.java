@@ -5,7 +5,9 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.util.Log;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -15,31 +17,47 @@ import java.util.Formatter;
 import euphoria.psycho.music.MusicService.LocalBinder;
 import euphoria.psycho.music.TimeBar.OnScrubListener;
 
-import static euphoria.psycho.music.DefaultTimeBar.getStringForTime;
 
 public class MusicActivity extends Activity {
-    LocalBinder mServiceStub;
-    private StringBuilder mStringBuilder;
-    private Formatter mFormatter;
+    LocalBinder mLocalBinder;
+    private final StringBuilder mStringBuilder = new StringBuilder();
+    private final Formatter mFormatter =new Formatter(mStringBuilder);
     private ProgressBar mProgressBar;
     private LinearLayout mController;
     private TextView mExoPosition;
     private TextView mExoDuration;
     private DefaultTimeBar mExoProgress;
+    private Handler mHandler = new Handler();
+
     ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName name, IBinder service) {
-            mServiceStub = (LocalBinder) service;
-            mExoProgress.setDuration(mServiceStub.duration());
-            mExoPosition.setText(getStringForTime(mStringBuilder, mFormatter, mServiceStub.position()));
-            mExoDuration.setText(getStringForTime(mStringBuilder, mFormatter, mServiceStub.duration()));
+            mLocalBinder = (LocalBinder) service;
+            mExoProgress.setDuration(mLocalBinder.duration());
+            mExoPosition.setText(getStringForTime(mStringBuilder, mFormatter, mLocalBinder.position()));
+            Log.e("TAG",getStringForTime(mStringBuilder, mFormatter, mLocalBinder.duration()));
+            mExoDuration.setText(getStringForTime(mStringBuilder, mFormatter, mLocalBinder.duration()));
         }
 
         @Override
         public void onServiceDisconnected(ComponentName name) {
-            mServiceStub = null;
+            mLocalBinder = null;
         }
     };
+
+    public static String getStringForTime(StringBuilder builder, Formatter formatter, long timeMs) {
+        if (timeMs == Long.MIN_VALUE + 1) {
+            timeMs = 0;
+        }
+        long totalSeconds = (timeMs + 500) / 1000;
+        long seconds = totalSeconds % 60;
+        long minutes = (totalSeconds / 60) % 60;
+        long hours = totalSeconds / 3600;
+        builder.setLength(0);
+        Log.e("TAG",String.format("%s %s %s",hours,minutes,seconds));
+        return hours > 0 ? formatter.format("%d:%02d:%02d", hours, minutes, seconds).toString()
+                : formatter.format("%02d:%02d", minutes, seconds).toString();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,12 +70,10 @@ public class MusicActivity extends Activity {
         mExoPosition = findViewById(R.id.exo_position);
         mExoProgress = findViewById(R.id.exo_progress);
         mExoDuration = findViewById(R.id.exo_duration);
-        mStringBuilder = new StringBuilder();
-        mFormatter = new Formatter();
         mExoProgress.addListener(new OnScrubListener() {
             @Override
             public void onScrubMove(TimeBar timeBar, long position) {
-                mServiceStub.seekTo((int) position);
+                mLocalBinder.seekTo((int) position);
             }
 
             @Override
@@ -66,9 +82,23 @@ public class MusicActivity extends Activity {
 
             @Override
             public void onScrubStop(TimeBar timeBar, long position, boolean canceled) {
-                mServiceStub.seekTo((int) position);
+                mLocalBinder.seekTo((int) position);
             }
         });
+        mHandler.post(() -> updateProgress());
+    }
+
+    private void updateProgress() {
+        if (mLocalBinder != null) {
+            mExoPosition.setText(getStringForTime(mStringBuilder, mFormatter, mLocalBinder.position()));
+            mExoProgress.setBufferedPosition(mLocalBinder.bufferedPosition());
+        }
+        mHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                updateProgress();
+            }
+        }, 1000);
     }
 
     @Override

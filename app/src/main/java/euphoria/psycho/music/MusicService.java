@@ -8,6 +8,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
+import android.media.MediaPlayer.OnBufferingUpdateListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
 import android.os.Binder;
@@ -19,12 +20,18 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 
 
-public class MusicService extends Service implements OnPreparedListener {
+public class MusicService extends Service implements OnPreparedListener, OnBufferingUpdateListener {
     public static final String CHANNEL_ID = "YT_channel_01";
     MediaPlayer mMediaPlayer;
     NotificationManager mNotificationManager;
     String[] mMusic;
     IBinder mBinder = new LocalBinder(this);
+    int mBufferedPosition;
+
+    @Override
+    public void onBufferingUpdate(MediaPlayer mp, int percent) {
+        mBufferedPosition = percent * mp.getDuration() / 100;
+    }
 
     private Builder createNotification() {
         Builder builder;
@@ -59,6 +66,7 @@ public class MusicService extends Service implements OnPreparedListener {
         Log.e("TAG", "onCreate");
         mMediaPlayer = new MediaPlayer();
         mMediaPlayer.setOnPreparedListener(this);
+        mMediaPlayer.setOnBufferingUpdateListener(this);
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             NotificationChannel channel;
@@ -123,6 +131,9 @@ public class MusicService extends Service implements OnPreparedListener {
             mService.get().seekTo(mes);
         }
 
+        public int bufferedPosition() {
+            return mService.get().bufferedPosition();
+        }
     }
 
     public void seekTo(int mes) {
@@ -135,5 +146,9 @@ public class MusicService extends Service implements OnPreparedListener {
 
     public long position() {
         return mMediaPlayer.getCurrentPosition();
+    }
+
+    public int bufferedPosition() {
+        return mBufferedPosition;
     }
 }
