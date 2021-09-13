@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/notification_media_content"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:id="@+id/notification_main_column"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/notification_content_margin_start"
+        android:layout_marginTop="@dimen/notification_content_margin_top"
+        android:orientation="horizontal"
+        android:tag="media">
+
+        <LinearLayout
+            android:id="@+id/notification_content_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="fill_vertical"
+            android:layout_weight="1"
+            android:minHeight="@dimen/notification_min_content_height"
+            android:orientation="vertical"
+            android:paddingBottom="@dimen/notification_content_margin">
+
+            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/line1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/title"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="marquee"
+                    android:fadingEdge="horizontal"
+                    android:singleLine="true"
+                    android:textAlignment="viewStart"
+                    android:textAppearance="@android:style/TextAppearance.Material.Notification.Title" />
+
+                <TextView
+                    android:id="@+id/text_line_1"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="16dp"
+                    android:ellipsize="marquee"
+                    android:fadingEdge="horizontal"
+                    android:gravity="end|bottom"
+                    android:singleLine="true" />
+            </LinearLayout>
+
+            <!--            <include layout="@android:layout/notification_template_text" />-->
+        </LinearLayout>
+    </LinearLayout>
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/notification_media_progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="vertical">
+
+        <SeekBar
+            android:id="@+id/notification_media_progress_bar"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="-12dp"
+            android:layout_marginBottom="-24dp"
+            android:clickable="true"
+            android:maxHeight="3dp"
+            android:paddingTop="24dp"
+            android:paddingBottom="24dp"
+            android:splitTrack="false" />
+
+        <FrameLayout
+            android:id="@+id/notification_media_progress_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginBottom="11dp">
+
+            <!-- width is set to "match_parent" to avoid extra layout calls -->
+            <TextView
+                android:id="@+id/notification_media_elapsed_time"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/notification_content_margin_start"
+                android:gravity="start"
+                android:lineHeight="20sp"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/notification_media_total_time"
+                android:lineHeight="20sp"
+                android:textSize="14sp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="@dimen/notification_content_margin_end"
+                android:gravity="end" />
+        </FrameLayout>
+    </LinearLayout>
+</LinearLayout>
