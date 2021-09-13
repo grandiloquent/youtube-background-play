@@ -126,16 +126,20 @@ public class MusicService extends Service implements OnPreparedListener, OnBuffe
         mBufferedPosition = percent * mp.getDuration() / 100;
     }
 
+    private void initializeMediaPlayer() {
+        mMediaPlayer = new MediaPlayer();
+        mMediaPlayer.setWakeMode(this, PowerManager.PARTIAL_WAKE_LOCK);
+        mMediaPlayer.setOnPreparedListener(this);
+        mMediaPlayer.setOnBufferingUpdateListener(this);
+    }
+
     @Override
     public void onCreate() {
         super.onCreate();
         final PowerManager powerManager = (PowerManager) getSystemService(Context.POWER_SERVICE);
         mWakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, getClass().getName());
         mWakeLock.setReferenceCounted(false);
-        mMediaPlayer = new MediaPlayer();
-        mMediaPlayer.setWakeMode(this, PowerManager.PARTIAL_WAKE_LOCK);
-        mMediaPlayer.setOnPreparedListener(this);
-        mMediaPlayer.setOnBufferingUpdateListener(this);
+        initializeMediaPlayer();
         mNotificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             NotificationChannel channel;
@@ -149,12 +153,16 @@ public class MusicService extends Service implements OnPreparedListener, OnBuffe
 
     @Override
     public void onDestroy() {
+        Log.e("B5aOx2", String.format("onDestroy, %s", ""));
+        if (mMusic != null && mMediaPlayer != null) {
+            setBookmark(mMusic[0], mMediaPlayer.getCurrentPosition());
+        }
         if (mMediaPlayer != null) {
             mMediaPlayer.release();
             mMediaPlayer = null;
         }
-        super.onDestroy();
         mWakeLock.release();
+        super.onDestroy();
     }
 
     @Override
@@ -171,6 +179,7 @@ public class MusicService extends Service implements OnPreparedListener, OnBuffe
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.e("B5aOx2", String.format("onStartCommand, %s", startId));
         if (intent == null) return START_NOT_STICKY;
         String[] musicUri = intent.getStringArrayExtra("music");
         if (musicUri == null) {
@@ -179,6 +188,9 @@ public class MusicService extends Service implements OnPreparedListener, OnBuffe
         try {
             if (mMusic != null && mMediaPlayer != null) {
                 setBookmark(mMusic[0], mMediaPlayer.getCurrentPosition());
+            }
+            if (mMediaPlayer == null) {
+                initializeMediaPlayer();
             }
             mMediaPlayer.reset();
             mMediaPlayer.setDataSource(this, Uri.parse(musicUri[1]));
