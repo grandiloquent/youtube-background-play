@@ -21,7 +21,7 @@ import euphoria.psycho.music.TimeBar.OnScrubListener;
 public class MusicActivity extends Activity {
     LocalBinder mLocalBinder;
     private final StringBuilder mStringBuilder = new StringBuilder();
-    private final Formatter mFormatter =new Formatter(mStringBuilder);
+    private final Formatter mFormatter = new Formatter(mStringBuilder);
     private ProgressBar mProgressBar;
     private LinearLayout mController;
     private TextView mExoPosition;
@@ -35,7 +35,6 @@ public class MusicActivity extends Activity {
             mLocalBinder = (LocalBinder) service;
             mExoProgress.setDuration(mLocalBinder.duration());
             mExoPosition.setText(getStringForTime(mStringBuilder, mFormatter, mLocalBinder.position()));
-            Log.e("TAG",getStringForTime(mStringBuilder, mFormatter, mLocalBinder.duration()));
             mExoDuration.setText(getStringForTime(mStringBuilder, mFormatter, mLocalBinder.duration()));
         }
 
@@ -54,7 +53,7 @@ public class MusicActivity extends Activity {
         long minutes = (totalSeconds / 60) % 60;
         long hours = totalSeconds / 3600;
         builder.setLength(0);
-        Log.e("TAG",String.format("%s %s %s",hours,minutes,seconds));
+        Log.e("TAG", String.format("%s %s %s", hours, minutes, seconds));
         return hours > 0 ? formatter.format("%d:%02d:%02d", hours, minutes, seconds).toString()
                 : formatter.format("%02d:%02d", minutes, seconds).toString();
     }
@@ -92,6 +91,7 @@ public class MusicActivity extends Activity {
         if (mLocalBinder != null) {
             mExoPosition.setText(getStringForTime(mStringBuilder, mFormatter, mLocalBinder.position()));
             mExoProgress.setBufferedPosition(mLocalBinder.bufferedPosition());
+            mExoProgress.setPosition(mLocalBinder.position());
         }
         mHandler.postDelayed(new Runnable() {
             @Override
@@ -103,6 +103,7 @@ public class MusicActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        Log.e("B5aOx2", String.format("onDestroy, %s", ""));
         unbindService(mServiceConnection);
         super.onDestroy();
     }
