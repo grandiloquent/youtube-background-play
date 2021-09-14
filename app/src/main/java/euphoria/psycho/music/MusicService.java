@@ -9,6 +9,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnBufferingUpdateListener;
+import android.media.MediaPlayer.OnErrorListener;
 import android.media.MediaPlayer.OnPreparedListener;
 import android.net.Uri;
 import android.os.Binder;
@@ -26,8 +27,14 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 
 
-public class MusicService extends Service implements OnPreparedListener, OnBufferingUpdateListener {
+public class MusicService extends Service implements OnPreparedListener, OnBufferingUpdateListener, OnErrorListener {
     public static final String CHANNEL_ID = "YT_channel_01";
+    private static final String BOOKMARK_CACHE_FILE = "bookmark";
+    private static final int BOOKMARK_CACHE_MAX_BYTES = 10 * 1024;
+    private static final int BOOKMARK_CACHE_MAX_ENTRIES = 100;
+    private static final int BOOKMARK_CACHE_VERSION = 1;
+    private static final int HALF_MINUTE = 30 * 1000;
+    private static final int TWO_MINUTES = 4 * HALF_MINUTE;
     MediaPlayer mMediaPlayer;
     NotificationManager mNotificationManager;
     String[] mMusic;
@@ -42,39 +49,6 @@ public class MusicService extends Service implements OnPreparedListener, OnBuffe
     public long duration() {
         return mMediaPlayer.getDuration();
     }
-
-    public long position() {
-        return mMediaPlayer.getCurrentPosition();
-    }
-
-    public void seekTo(int mes) {
-        mMediaPlayer.seekTo(mes);
-    }
-
-    private Builder createNotification() {
-        Builder builder;
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            builder = new Builder(this, CHANNEL_ID);
-        } else {
-            builder = new Builder(this);
-        }
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-                this, 0, new Intent(this, MusicActivity
-                        .class),
-                PendingIntent.FLAG_UPDATE_CURRENT
-        );
-        builder.setSmallIcon(R.drawable.ic_stat_yt)
-                .addAction(R.drawable.ic_action_play_arrow, "", null)
-                .setContentIntent(pendingIntent);
-        return builder;
-    }
-
-    private static final String BOOKMARK_CACHE_FILE = "bookmark";
-    private static final int BOOKMARK_CACHE_MAX_ENTRIES = 100;
-    private static final int BOOKMARK_CACHE_MAX_BYTES = 10 * 1024;
-    private static final int BOOKMARK_CACHE_VERSION = 1;
-    private static final int HALF_MINUTE = 30 * 1000;
-    private static final int TWO_MINUTES = 4 * HALF_MINUTE;
 
     public Integer getBookmark(String path) {
         try {
@@ -96,6 +70,14 @@ public class MusicService extends Service implements OnPreparedListener, OnBuffe
         return null;
     }
 
+    public long position() {
+        return mMediaPlayer.getCurrentPosition();
+    }
+
+    public void seekTo(int mes) {
+        mMediaPlayer.seekTo(mes);
+    }
+
     public void setBookmark(String path, int bookmark/*, int duration*/) {
         try {
             BlobCache cache = CacheManager.getCache(this,
@@ -112,6 +94,32 @@ public class MusicService extends Service implements OnPreparedListener, OnBuffe
         }
     }
 
+    private Builder createNotification() {
+        Builder builder;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            builder = new Builder(this, CHANNEL_ID);
+        } else {
+            builder = new Builder(this);
+        }
+        PendingIntent pendingIntent = PendingIntent.getActivity(
+                this, 0, new Intent(this, MusicActivity
+                        .class),
+                PendingIntent.FLAG_UPDATE_CURRENT
+        );
+        builder.setSmallIcon(R.drawable.ic_stat_yt)
+                .addAction(R.drawable.ic_action_play_arrow, "", null)
+                .setContentIntent(pendingIntent);
+        return builder;
+    }
+
+    private void initializeMediaPlayer() {
+        mMediaPlayer = new MediaPlayer();
+        mMediaPlayer.setWakeMode(this, PowerManager.PARTIAL_WAKE_LOCK);
+        mMediaPlayer.setOnPreparedListener(this);
+        mMediaPlayer.setOnBufferingUpdateListener(this);
+        mMediaPlayer.setOnErrorListener(this);
+    }
+
     private void showNotification(Builder builder) {
         mNotificationManager.notify(hashCode(), builder.build());
     }
@@ -124,13 +132,6 @@ public class MusicService extends Service implements OnPreparedListener, OnBuffe
     @Override
     public void onBufferingUpdate(MediaPlayer mp, int percent) {
         mBufferedPosition = percent * mp.getDuration() / 100;
-    }
-
-    private void initializeMediaPlayer() {
-        mMediaPlayer = new MediaPlayer();
-        mMediaPlayer.setWakeMode(this, PowerManager.PARTIAL_WAKE_LOCK);
-        mMediaPlayer.setOnPreparedListener(this);
-        mMediaPlayer.setOnBufferingUpdateListener(this);
     }
 
     @Override
@@ -163,6 +164,14 @@ public class MusicService extends Service implements OnPreparedListener, OnBuffe
         }
         mWakeLock.release();
         super.onDestroy();
+    }
+
+    @Override
+    public boolean onError(MediaPlayer mp, int what, int extra) {
+        if (mMusic != null && mMediaPlayer != null) {
+            setBookmark(mMusic[0], mMediaPlayer.getCurrentPosition());
+        }
+        return false;
     }
 
     @Override

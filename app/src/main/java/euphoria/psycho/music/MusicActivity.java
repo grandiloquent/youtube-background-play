@@ -53,7 +53,6 @@ public class MusicActivity extends Activity {
         long minutes = (totalSeconds / 60) % 60;
         long hours = totalSeconds / 3600;
         builder.setLength(0);
-        Log.e("TAG", String.format("%s %s %s", hours, minutes, seconds));
         return hours > 0 ? formatter.format("%d:%02d:%02d", hours, minutes, seconds).toString()
                 : formatter.format("%02d:%02d", minutes, seconds).toString();
     }
