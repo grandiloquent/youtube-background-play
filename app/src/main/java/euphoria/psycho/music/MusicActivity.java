@@ -71,6 +71,7 @@ public class MusicActivity extends Activity {
         mExoProgress.addListener(new OnScrubListener() {
             @Override
             public void onScrubMove(TimeBar timeBar, long position) {
+                mExoPosition.setText(getStringForTime(mStringBuilder, mFormatter, position));
                 mLocalBinder.seekTo((int) position);
             }
 
