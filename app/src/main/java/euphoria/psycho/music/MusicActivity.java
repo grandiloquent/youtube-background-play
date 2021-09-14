@@ -27,7 +27,7 @@ public class MusicActivity extends Activity {
     private TextView mExoPosition;
     private TextView mExoDuration;
     private DefaultTimeBar mExoProgress;
-    private Handler mHandler = new Handler();
+    private final Handler mHandler = new Handler();
 
     ServiceConnection mServiceConnection = new ServiceConnection() {
         @Override
@@ -84,7 +84,7 @@ public class MusicActivity extends Activity {
                 mLocalBinder.seekTo((int) position);
             }
         });
-        mHandler.post(() -> updateProgress());
+        mHandler.post(this::updateProgress);
     }
 
     private void updateProgress() {
