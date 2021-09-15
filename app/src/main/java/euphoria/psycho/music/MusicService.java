@@ -154,8 +154,9 @@ public class MusicService extends Service implements OnPreparedListener, OnBuffe
 
     @Override
     public void onDestroy() {
-        Log.e("B5aOx2", String.format("onDestroy, %s", ""));
+        Log.e("B5aOx2", String.format("onDestroy, %s %s", mMusic==null,mMediaPlayer==null));
         if (mMusic != null && mMediaPlayer != null) {
+            Log.e("B5aOx2", String.format("onDestroy, %s", mMediaPlayer.getCurrentPosition()));
             setBookmark(mMusic[0], mMediaPlayer.getCurrentPosition());
         }
         if (mMediaPlayer != null) {
@@ -188,8 +189,11 @@ public class MusicService extends Service implements OnPreparedListener, OnBuffe
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        Log.e("B5aOx2", String.format("onStartCommand, %s", startId));
-        if (intent == null) return START_NOT_STICKY;
+        if (intent == null) {
+            stopForeground(true);
+            stopSelf();
+            return START_NOT_STICKY;
+        }
         String[] musicUri = intent.getStringArrayExtra("music");
         if (musicUri == null) {
             return START_NOT_STICKY;
